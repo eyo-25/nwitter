@@ -14,7 +14,11 @@ function Router() {
     authService.onAuthStateChanged((user) => {
       if (user) {
         setIsLogIn(true);
-        setUserObj(user);
+        setUserObj({
+          displayName: user.displayName,
+          uid: user.uid,
+          updateProfile: (args) => user.updateProfile(args),
+        });
       } else {
         setIsLogIn(false);
       }
@@ -22,10 +26,19 @@ function Router() {
     });
   }, []);
 
+  const refreshUser = () => {
+    const user = authService.currentUser;
+    setUserObj({
+      displayName: user.displayName,
+      uid: user.uid,
+      updateProfile: (args) => user.updateProfile(args),
+    });
+  };
+
   return (
     <>
       <BrowserRouter>
-        {isLogIn && <Navigation />}
+        {isLogIn && <Navigation userObj={userObj} />}
         <Routes>
           <Route
             path="/"
@@ -41,7 +54,10 @@ function Router() {
               )
             }
           />
-          <Route path="/profile" element={<Profile />}></Route>
+          <Route
+            path="/profile"
+            element={<Profile userObj={userObj} refreshUser={refreshUser} />}
+          ></Route>
         </Routes>
       </BrowserRouter>
     </>
