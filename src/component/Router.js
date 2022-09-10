@@ -4,12 +4,20 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Profile from "routes/Profile";
 import Auth from "../routes/Auth";
 import Home from "../routes/Home";
-import { Navigation } from "./Navigation";
+import Navigation from "./Navigation";
 
 function Router() {
   const [init, setInit] = useState(false);
   const [isLogIn, setIsLogIn] = useState(false);
   const [userObj, setUserObj] = useState(null);
+  const refreshUser = () => {
+    const user = authService.currentUser;
+    setUserObj({
+      displayName: user.displayName,
+      uid: user.uid,
+      updateProfile: (args) => user.updateProfile(args),
+    });
+  };
   useEffect(() => {
     authService.onAuthStateChanged((user) => {
       if (user) {
@@ -20,45 +28,48 @@ function Router() {
           updateProfile: (args) => user.updateProfile(args),
         });
       } else {
+        setUserObj(null);
         setIsLogIn(false);
       }
       setInit(true);
     });
   }, []);
 
-  const refreshUser = () => {
-    const user = authService.currentUser;
-    setUserObj({
-      displayName: user.displayName,
-      uid: user.uid,
-      updateProfile: (args) => user.updateProfile(args),
-    });
-  };
-
   return (
     <>
-      <BrowserRouter>
+      <BrowserRouter basename={process.env.PUBLIC_URL}>
         {isLogIn && <Navigation userObj={userObj} />}
-        <Routes>
-          <Route
-            path="/"
-            element={
-              init ? (
-                isLogIn ? (
-                  <Home userObj={userObj} />
+        <div
+          style={{
+            maxWidth: 890,
+            width: "100%",
+            margin: "0 auto",
+            marginTop: 80,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <Routes>
+            <Route
+              path="/"
+              element={
+                init ? (
+                  isLogIn ? (
+                    <Home userObj={userObj} />
+                  ) : (
+                    <Auth />
+                  )
                 ) : (
-                  <Auth />
+                  <span>Loading...</span>
                 )
-              ) : (
-                <span>Loading...</span>
-              )
-            }
-          />
-          <Route
-            path="/profile"
-            element={<Profile userObj={userObj} refreshUser={refreshUser} />}
-          ></Route>
-        </Routes>
+              }
+            />
+            <Route
+              path="/profile"
+              element={<Profile userObj={userObj} refreshUser={refreshUser} />}
+            ></Route>
+          </Routes>
+        </div>
       </BrowserRouter>
     </>
   );
